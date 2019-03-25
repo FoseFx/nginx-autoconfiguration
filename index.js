@@ -11,7 +11,7 @@ const { exec } = require('child_process');
  * At the end it will restart the nginx service using ("systemctl restart nginx"), make sure this
  * application has the permissions to do so
  * 
- * @param {Path} CONFIG_FOLDER - path to your config files, that should be interpolated
+ * @param {Path} CONFIG_FOLDER - path to your config files, (absolute) that should be interpolated
  * @param {Number} PORT 
  * @param {String} SECRET 
  * @param {String} NGINX_PATH - Path to nginx config folder
@@ -24,9 +24,9 @@ function start(CONFIG_FOLDER, PORT, SECRET, NGINX_PATH, func){
     
     function collectConfigs(p) {
     
-        fs.readdirSync(path.join(__dirname, p)).forEach((f) => {
+        fs.readdirSync(p).forEach((f) => {
             if(/^.*\.conf$/.test(f)){
-                collectConfig(`./${p}/${f}`);
+                collectConfig(`${p}/${f}`);
             }
             else if(/^((?!\.conf).)*$/.test(f))
                 collectConfigs(p + "/" + f);
@@ -37,8 +37,8 @@ function start(CONFIG_FOLDER, PORT, SECRET, NGINX_PATH, func){
     
     function collectConfig(file){
         console.log("Detected config", file);
-        const content = fs.readFileSync(path.join(__dirname, file), "utf-8");
-        configs.push({file, content});
+        const content = fs.readFileSync(file, "utf-8");
+        configs.push({file: path.relative(CONFIG_FOLDER, file), content});
     }
     
     
@@ -52,41 +52,49 @@ function start(CONFIG_FOLDER, PORT, SECRET, NGINX_PATH, func){
         });
     });
     
-    function handler(callbefore){
-        const res = callbefore();
-        for (key of Object.keys(res)) {
-            variables[key] = res[key];
-        }
-    
-        console.log("Going to set Variables: ");
-        for (key of Object.keys(variables)) {
-            console.log("\t-", key, variables[key]);
-            if(variables[key] === null){
-                console.error("Fatal", key, "not set");
-                return;
+    async function handler(callbefore){
+        try {
+            const pres = callbefore();
+
+            const res = await Promise.resolve(pres);
+
+            for (key of Object.keys(res)) {
+                variables[key] = res[key];
             }
-        }
-    
-        configs.forEach(({file, content}) => {
-            let file_content = content;
+        
+            console.log("Going to set Variables: ");
             for (key of Object.keys(variables)) {
-                file_content = content.replace(new RegExp(`\\$\\{${key}\\}`, "g"), variables[key]);            
+                console.log("\t-", key, variables[key]);
+                if(variables[key] === null){
+                    console.error("Fatal", key, "not set");
+                    return;
+                }
             }
-            fsExtra.outputFileSync(path.join(NGINX_PATH, file), file_content, "utf-8");
-            console.log("Wrote", path.join(NGINX_PATH, file));
-        });
+        
+            configs.forEach(({file, content}) => {
+                let file_content = content;
+                for (key of Object.keys(variables)) {
+                    file_content = content.replace(new RegExp(`\\$\\{${key}\\}`, "g"), variables[key]);            
+                }
+                fsExtra.outputFileSync(path.join(NGINX_PATH, file), file_content, "utf-8");
+                console.log("Wrote", path.join(NGINX_PATH, file));
+            });
 
 
-        console.log("Restart NGINX...");
-        exec('systemctl restart nginx', (err, stdout, stderr) => {
-            if (err) {
-                console.error("Could not restart nginx, are you root?");
-                console.error(err);
-                return;
-            }
-            console.log("Ok");
-            
-          });
+            console.log("Restart NGINX...");
+            exec('systemctl restart nginx', (err, stdout, stderr) => {
+                if (err) {
+                    console.error("Could not restart nginx, are you root?");
+                    console.error(err);
+                    return;
+                }
+                console.log("Ok");
+                
+            });
+
+        } catch (error) {
+            console.error(error);
+        }
         
     }
     
