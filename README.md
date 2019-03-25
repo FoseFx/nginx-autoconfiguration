@@ -6,7 +6,7 @@ A library that generates your NGINX confguration files on http requests.
 Normal nginx syntax, but you can use ${VAR_NAME} anywhere. Where "VAR_NAME" is a variable, which gets interpolated into your config.
 
 ## Use: 
-[Example](example/example.js)
+[Example](examples/example.js)
 
 1. `$ npm i nginx-autoconfig`
 2. something like this: 
