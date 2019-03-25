@@ -1,6 +1,6 @@
 {
   "name": "nginx-autoconfig",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Configures and restarts nginx on http requests",
   "main": "index.js",
   "scripts": {
