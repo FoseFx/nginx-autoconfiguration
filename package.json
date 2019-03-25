@@ -10,5 +10,16 @@
   "license": "MIT",
   "dependencies": {
     "fs-extra": "^7.0.1"
-  }
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FoseFx/nginx-autoconfiguration.git"
+  },
+  "bugs": {
+    "url": "https://github.com/FoseFx/nginx-autoconfiguration/issues"
+  },
+  "homepage": "https://github.com/FoseFx/nginx-autoconfiguration#readme"
 }
