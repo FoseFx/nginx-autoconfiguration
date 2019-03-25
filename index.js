@@ -52,9 +52,9 @@ function start(CONFIG_FOLDER, PORT, SECRET, NGINX_PATH, func){
         });
     });
     
-    async function handler(callbefore){
+    async function handler(callbefore, req){
         try {
-            const pres = callbefore();
+            const pres = callbefore(req);
 
             const res = await Promise.resolve(pres);
 
@@ -110,7 +110,7 @@ function start(CONFIG_FOLDER, PORT, SECRET, NGINX_PATH, func){
         res.write('Ok');
         res.end();
     
-        handler(func);
+        handler(func, req);
     }).listen(PORT, () => {console.log("NGINX-AUTOCONFIG started on " + PORT);});
 }
 
